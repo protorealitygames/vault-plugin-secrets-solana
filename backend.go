@@ -330,6 +330,9 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 	if err != nil {
 		return nil, fmt.Errorf("unable to get the config entry, error: %v", err)
 	}
+	if entry == nil {
+		return nil, fmt.Errorf("plugin is not configured, please write to /config path")
+	}
 
 	cfg := &StorageConfig{}
 	if err := entry.DecodeJSON(&cfg); err != nil {
