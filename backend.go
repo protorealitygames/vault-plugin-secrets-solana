@@ -2,6 +2,7 @@ package solana
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
 	bin "github.com/gagliardetto/binary"
@@ -176,9 +177,13 @@ func (b *backend) handleConfigCreate(ctx context.Context, req *logical.Request, 
 		return nil, fmt.Errorf("empty fee payer key")
 	}
 
-	_, err := solana.PrivateKeyFromBase58(feePayerKey)
+	decodedPrivKey, err := solana.PrivateKeyFromBase58(feePayerKey)
 	if err != nil {
 		return nil, fmt.Errorf("invalid fee payer key, error: %v", err)
+	}
+
+	if len(decodedPrivKey) != ed25519.PrivateKeySize {
+		return nil, fmt.Errorf("invalid fee payer key, expected: %d bytes, got %d bytes", ed25519.PrivateKeySize, len(decodedPrivKey))
 	}
 
 	entry, err := logical.StorageEntryJSON("config", StorageConfig{
