@@ -135,7 +135,7 @@ func (b *backend) key() []*framework.Path {
 func (b *backend) sign() []*framework.Path {
 	return []*framework.Path{
 		{
-			Pattern: `login$`,
+			Pattern: `sign$`,
 
 			Fields: map[string]*framework.FieldSchema{
 				"tx_payload": {
