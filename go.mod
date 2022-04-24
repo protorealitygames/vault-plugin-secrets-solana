@@ -3,11 +3,13 @@ module github.com/parthdesai/vault-plugin-secrets-solana
 go 1.17
 
 require (
+	github.com/gagliardetto/binary v0.6.1
 	github.com/gagliardetto/solana-go v1.4.0
 	github.com/hashicorp/errwrap v1.0.0
 	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/vault/api v1.0.5-0.20210325191337-ac5500471f36
 	github.com/hashicorp/vault/sdk v0.1.14-0.20210325185647-d3758c9bd369
+	github.com/test-go/testify v1.1.4
 )
 
 require (
@@ -20,7 +22,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70 // indirect
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/gagliardetto/binary v0.6.1 // indirect
 	github.com/gagliardetto/treeout v0.1.4 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
@@ -54,7 +55,9 @@ require (
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
 	github.com/tidwall/gjson v1.9.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
@@ -73,4 +76,5 @@ require (
 	google.golang.org/grpc v1.29.1 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )

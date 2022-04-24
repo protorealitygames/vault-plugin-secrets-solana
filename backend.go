@@ -63,7 +63,7 @@ func newBackend() (*backend, error) {
 	b := &backend{}
 
 	b.Backend = &framework.Backend{
-		Help:        strings.TrimSpace(mockHelp),
+		Help:        strings.TrimSpace(solanaHelp),
 		BackendType: logical.TypeLogical,
 		Paths: framework.PathAppend(
 			b.sign(),
@@ -310,9 +310,47 @@ func (b *backend) handleKeyRead(ctx context.Context, req *logical.Request, data 
 
 }
 
+func validateAndSignTx(tx *solana.Transaction, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
+	derivedFeePayerPubkey := tx.Message.AccountKeys[0]
+	if !derivedFeePayerPubkey.Equals(feePayerKey.PublicKey()) {
+		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
+	}
+
+	for instructionIndex, instruction := range tx.Message.Instructions {
+		for instructionAccountIdx, keyIndex := range instruction.Accounts {
+			if keyIndex == 0 {
+				return nil, fmt.Errorf("fee payer pubkey is used as part of the instruction at: %d with index: %d", instructionIndex, instructionAccountIdx)
+			}
+		}
+	}
+
+	_, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+		if key == derivedFeePayerPubkey {
+			return &feePayerKey
+		} else if key == userKey.PublicKey() {
+			return &userKey
+		} else {
+			return nil
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
 func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	if req.ClientToken == "" {
 		return nil, fmt.Errorf("client token empty")
+	}
+
+	entry, err := req.Storage.Get(ctx, "config")
+	if err != nil {
+		return nil, fmt.Errorf("unable to get the config entry, error: %v", err)
+	}
+	if entry == nil {
+		return nil, fmt.Errorf("plugin is not configured, please write to /config path")
 	}
 
 	payload := data.Get("tx_payload").(string)
@@ -331,14 +369,6 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to construct a transaction from tx payload")
 	}
 
-	entry, err := req.Storage.Get(ctx, "config")
-	if err != nil {
-		return nil, fmt.Errorf("unable to get the config entry, error: %v", err)
-	}
-	if entry == nil {
-		return nil, fmt.Errorf("plugin is not configured, please write to /config path")
-	}
-
 	cfg := &StorageConfig{}
 	if err := entry.DecodeJSON(&cfg); err != nil {
 		return nil, fmt.Errorf("unable to decode config json, error: %v", err)
@@ -349,16 +379,16 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to read fee payer key, error: %v", err)
 	}
 
-	previousEntry, err := req.Storage.Get(ctx, req.EntityID+"/"+"key")
+	userKeyEntry, err := req.Storage.Get(ctx, req.EntityID+"/"+"key")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get existing user key if any due to an error: %v", err)
 	}
-	if previousEntry == nil {
+	if userKeyEntry == nil {
 		return nil, fmt.Errorf("user key does not exists, please create one")
 	}
 
 	keyData := UserKeyData{}
-	if err := previousEntry.DecodeJSON(&keyData); err != nil {
+	if err := userKeyEntry.DecodeJSON(&keyData); err != nil {
 		return nil, fmt.Errorf("unable to decode user key retrieved from storage due to an error: %s", err)
 	}
 
@@ -367,34 +397,13 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to read user key, error: %v", err)
 	}
 
-	derivedFeePayerPubkey := tx.Message.AccountKeys[0]
-	if !derivedFeePayerPubkey.Equals(feePayerKey.PublicKey()) {
-		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
-	}
-
-	for instructionIndex, instruction := range tx.Message.Instructions {
-		for instructionAccountIdx, keyIndex := range instruction.Accounts {
-			if keyIndex == 0 {
-				return nil, fmt.Errorf("fee payer pubkey is used as part of the instruction at: %d with index: %d", instructionIndex, instructionAccountIdx)
-			}
-		}
-	}
-
-	_, err = tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
-		if key == derivedFeePayerPubkey {
-			return &feePayerKey
-		} else if key == privateKey.PublicKey() {
-			return &privateKey
-		} else {
-			return nil
-		}
-	})
+	signedTx, err := validateAndSignTx(tx, feePayerKey, privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to sign the transaction due to an error: %v", err)
+		return nil, fmt.Errorf("unable to sign tx due to an error: %v", err)
 	}
 
 	output := SignOutput{
-		SignedTx: tx.MustToBase64(),
+		SignedTx: signedTx.MustToBase64(),
 	}
 
 	respData := make(map[string]interface{})
@@ -405,6 +414,6 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 	}, nil
 }
 
-const mockHelp = `
+const solanaHelp = `
 Solana secret backend allows user to sign tx by acting as secure signing module.
 `
