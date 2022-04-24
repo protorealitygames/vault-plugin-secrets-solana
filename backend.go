@@ -369,10 +369,16 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 
 	derivedFeePayerPubkey := tx.Message.AccountKeys[0]
 	if !derivedFeePayerPubkey.Equals(feePayerKey.PublicKey()) {
-		return nil, fmt.Errorf("fee payer pubkey must be the one that signed this transaction")
+		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
 	}
 
-	// TODO: Verify that fee payer pubkey is only used to deduct the fee and not involved in any instructions
+	for instructionIndex, instruction := range tx.Message.Instructions {
+		for instructionAccountIdx, keyIndex := range instruction.Accounts {
+			if keyIndex == 0 {
+				return nil, fmt.Errorf("fee payer pubkey is used as part of the instruction at: %d with index: %d", instructionIndex, instructionAccountIdx)
+			}
+		}
+	}
 
 	_, err = tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
 		if key == derivedFeePayerPubkey {
