@@ -139,9 +139,9 @@ func (b *backend) sign() []*framework.Path {
 			Pattern: `sign$`,
 
 			Fields: map[string]*framework.FieldSchema{
-				"tx_payload": {
+				"msg_payload": {
 					Type:        framework.TypeString,
-					Description: "Specifies the tx payload to be signed",
+					Description: "Specifies the msg payload to be signed",
 				},
 			},
 
@@ -310,19 +310,22 @@ func (b *backend) handleKeyRead(ctx context.Context, req *logical.Request, data 
 
 }
 
-func validateAndSignTx(tx *solana.Transaction, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
-	derivedFeePayerPubkey := tx.Message.AccountKeys[0]
+func validateAndSignMsg(msg solana.Message, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
+	derivedFeePayerPubkey := msg.AccountKeys[0]
 	if !derivedFeePayerPubkey.Equals(feePayerKey.PublicKey()) {
 		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
 	}
 
-	for instructionIndex, instruction := range tx.Message.Instructions {
+	for instructionIndex, instruction := range msg.Instructions {
 		for instructionAccountIdx, keyIndex := range instruction.Accounts {
 			if keyIndex == 0 {
 				return nil, fmt.Errorf("fee payer pubkey is used as part of the instruction at: %d with index: %d", instructionIndex, instructionAccountIdx)
 			}
 		}
 	}
+
+	tx := solana.Transaction{}
+	tx.Message = msg
 
 	_, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
 		if key == derivedFeePayerPubkey {
@@ -337,7 +340,7 @@ func validateAndSignTx(tx *solana.Transaction, feePayerKey, userKey solana.Priva
 		return nil, err
 	}
 
-	return tx, nil
+	return &tx, nil
 }
 
 func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -353,20 +356,20 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("plugin is not configured, please write to /config path")
 	}
 
-	payload := data.Get("tx_payload").(string)
+	payload := data.Get("msg_payload").(string)
 	if payload == "" {
-		return nil, fmt.Errorf("empty tx payload")
+		return nil, fmt.Errorf("empty message payload")
 	}
 
-	binaryTx, err := base64.StdEncoding.DecodeString(payload)
+	binaryMsg, err := base64.StdEncoding.DecodeString(payload)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode tx payload")
 	}
 
-	// parse transaction:
-	tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(binaryTx))
-	if err != nil {
-		return nil, fmt.Errorf("unable to construct a transaction from tx payload")
+	// parse message:
+	msg := solana.Message{}
+	if err := msg.UnmarshalWithDecoder(bin.NewBinDecoder(binaryMsg)); err != nil {
+		return nil, fmt.Errorf("unable to construct a message from message payload")
 	}
 
 	cfg := &StorageConfig{}
@@ -397,7 +400,7 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to read user key, error: %v", err)
 	}
 
-	signedTx, err := validateAndSignTx(tx, feePayerKey, privateKey)
+	signedTx, err := validateAndSignMsg(msg, feePayerKey, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to sign tx due to an error: %v", err)
 	}
