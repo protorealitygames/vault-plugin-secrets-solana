@@ -34,6 +34,16 @@ type SignOutput struct {
 	SignedTx string `json:"signed_tx"`
 }
 
+type SignaturePair struct {
+	Signature string `json:"signature"`
+	Pubkey    string `json:"pubkey"`
+}
+
+type ParsedSignaturePair struct {
+	Signature solana.Signature
+	PubKey    solana.PublicKey
+}
+
 // backend wraps the backend framework and adds a map for storing key value pairs
 type backend struct {
 	*framework.Backend
@@ -89,6 +99,7 @@ func (b *backend) config() []*framework.Path {
 				"fee_payer_key": {
 					Type:        framework.TypeString,
 					Description: "Specifies the fee payer private key that will be paying fees for the tx",
+					Required:    true,
 				},
 			},
 
@@ -142,6 +153,12 @@ func (b *backend) sign() []*framework.Path {
 				"msg_payload": {
 					Type:        framework.TypeString,
 					Description: "Specifies the msg payload to be signed",
+					Required:    true,
+				},
+				"additional_signatures": {
+					Type:        framework.TypeSlice,
+					Description: "Array of additional signatures",
+					Required:    false,
 				},
 			},
 
@@ -172,9 +189,16 @@ func (b *backend) handleConfigCreate(ctx context.Context, req *logical.Request, 
 		return nil, fmt.Errorf("client token empty")
 	}
 
-	feePayerKey := data.Get("fee_payer_key").(string)
-	if feePayerKey == "" {
+	rawFeePayerKey, exists, err := data.GetOkErr("fee_payer_key")
+	if !exists || rawFeePayerKey == nil {
 		return nil, fmt.Errorf("empty fee payer key")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid data for fee payer key: %v", rawFeePayerKey)
+	}
+	feePayerKey, ok := rawFeePayerKey.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid fee payer key value: %v", rawFeePayerKey)
 	}
 
 	decodedPrivKey, err := solana.PrivateKeyFromBase58(feePayerKey)
@@ -310,9 +334,8 @@ func (b *backend) handleKeyRead(ctx context.Context, req *logical.Request, data 
 
 }
 
-func validateAndSignMsg(msg solana.Message, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
-	derivedFeePayerPubkey := msg.AccountKeys[0]
-	if !derivedFeePayerPubkey.Equals(feePayerKey.PublicKey()) {
+func validateAndSignMsg(msg solana.Message, additionalSignatures []ParsedSignaturePair, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
+	if !msg.AccountKeys[0].Equals(feePayerKey.PublicKey()) {
 		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
 	}
 
@@ -324,23 +347,79 @@ func validateAndSignMsg(msg solana.Message, feePayerKey, userKey solana.PrivateK
 		}
 	}
 
-	tx := solana.Transaction{}
-	tx.Message = msg
-
-	_, err := tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
-		if key == derivedFeePayerPubkey {
-			return &feePayerKey
-		} else if key == userKey.PublicKey() {
-			return &userKey
-		} else {
-			return nil
-		}
-	})
+	messageContent, err := msg.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
 
+	feePayerSignature, err := feePayerKey.Sign(messageContent)
+	if err != nil {
+		return nil, err
+	}
+
+	userSignature, err := userKey.Sign(messageContent)
+	if err != nil {
+		return nil, err
+	}
+
+	additionalSignatures = append(additionalSignatures, ParsedSignaturePair{
+		Signature: feePayerSignature,
+		PubKey:    feePayerKey.PublicKey(),
+	})
+
+	additionalSignatures = append(additionalSignatures, ParsedSignaturePair{
+		Signature: userSignature,
+		PubKey:    userKey.PublicKey(),
+	})
+
+	signatureRequiredPubkeys := msg.AccountKeys[0:msg.Header.NumRequiredSignatures]
+
+	signatureKeyPairMap := make(map[solana.PublicKey]solana.Signature)
+	for _, additionalSignature := range additionalSignatures {
+		if _, ok := signatureKeyPairMap[additionalSignature.PubKey]; ok {
+			return nil, fmt.Errorf("duplicate entry in signature detected with Pubkey: %s", additionalSignature.PubKey.String())
+		}
+		if !additionalSignature.Signature.Verify(additionalSignature.PubKey, messageContent) {
+			return nil, fmt.Errorf("mismatch between signature: %s and public key: %s", additionalSignature.Signature.String(), additionalSignature.PubKey.String())
+		}
+		signatureKeyPairMap[additionalSignature.PubKey] = additionalSignature.Signature
+	}
+
+	tx := solana.Transaction{}
+	tx.Message = msg
+
+	for _, pubkey := range signatureRequiredPubkeys {
+		if signature, ok := signatureKeyPairMap[pubkey]; !ok {
+			return nil, fmt.Errorf("no signature detected for Pubkey: %s", pubkey.String())
+		} else {
+			tx.Signatures = append(tx.Signatures, signature)
+		}
+	}
+
 	return &tx, nil
+}
+
+func parseAdditionalSignature(additionalSignatures map[string]string) ([]ParsedSignaturePair, error) {
+	parsedSignatures := make([]ParsedSignaturePair, 0)
+
+	for pubkey, signature := range additionalSignatures {
+		parsedPubKey, err := solana.PublicKeyFromBase58(pubkey)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse pubkey: %s", pubkey)
+		}
+
+		parsedSignature, err := solana.SignatureFromBase58(signature)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse signature: %s", signature)
+		}
+
+		parsedSignatures = append(parsedSignatures, ParsedSignaturePair{
+			Signature: parsedSignature,
+			PubKey:    parsedPubKey,
+		})
+	}
+
+	return parsedSignatures, nil
 }
 
 func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -356,9 +435,33 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("plugin is not configured, please write to /config path")
 	}
 
-	payload := data.Get("msg_payload").(string)
-	if payload == "" {
+	rawPayload, exists, err := data.GetOkErr("msg_payload")
+	if !exists || rawPayload == nil {
 		return nil, fmt.Errorf("empty message payload")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid data for message payload: %v", rawPayload)
+	}
+	payload, ok := rawPayload.(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid payload value: %v", rawPayload)
+	}
+
+	additionalSignatureRawMap, exists, err := data.GetOkErr("additional_signatures")
+	if !exists || additionalSignatureRawMap == nil {
+		additionalSignatureRawMap = make(map[string]interface{})
+	}
+	if err != nil {
+		return nil, fmt.Errorf("invalid data for additional signature: %v", err)
+	}
+	additionalSignatureMap, ok := additionalSignatureRawMap.(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("invalid additional signature map: %+v", additionalSignatureRawMap)
+	}
+
+	parsedSignatures, err := parseAdditionalSignature(additionalSignatureMap)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse additional signature due to an error: %s", err)
 	}
 
 	binaryMsg, err := base64.StdEncoding.DecodeString(payload)
@@ -400,7 +503,7 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to read user key, error: %v", err)
 	}
 
-	signedTx, err := validateAndSignMsg(msg, feePayerKey, privateKey)
+	signedTx, err := validateAndSignMsg(msg, parsedSignatures, feePayerKey, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to sign tx due to an error: %v", err)
 	}
