@@ -156,7 +156,7 @@ func (b *backend) sign() []*framework.Path {
 					Required:    true,
 				},
 				"additional_signatures": {
-					Type:        framework.TypeSlice,
+					Type:        framework.TypeMap,
 					Description: "Array of additional signatures",
 					Required:    false,
 				},

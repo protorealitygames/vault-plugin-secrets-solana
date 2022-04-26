@@ -38,7 +38,7 @@ func TestGenerateTx(t *testing.T) {
 			return nil
 		}
 	})
-	require.NoError(t, err, "No errror should happen here")
+	require.NoError(t, err, "No error should happen here")
 
 	base64Payload, err := tx.ToBase64()
 	require.NoError(t, err, "We should be able to get the base64 payload")
