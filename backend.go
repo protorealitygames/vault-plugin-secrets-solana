@@ -156,8 +156,8 @@ func (b *backend) sign() []*framework.Path {
 					Required:    true,
 				},
 				"additional_signatures": {
-					Type:        framework.TypeMap,
-					Description: "Array of additional signatures",
+					Type:        framework.TypeKVPairs,
+					Description: "Map of additional signatures",
 					Required:    false,
 				},
 			},
@@ -449,7 +449,7 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 
 	additionalSignatureRawMap, exists, err := data.GetOkErr("additional_signatures")
 	if !exists || additionalSignatureRawMap == nil {
-		additionalSignatureRawMap = make(map[string]interface{})
+		additionalSignatureRawMap = make(map[string]string)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("invalid data for additional signature: %v", err)

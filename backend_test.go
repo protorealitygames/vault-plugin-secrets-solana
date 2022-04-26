@@ -5,7 +5,7 @@ import (
 	"fmt"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
