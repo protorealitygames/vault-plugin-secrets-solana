@@ -3,11 +3,59 @@ package solana
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+func TestGenerateTx2(t *testing.T) {
+	feePayerPrivateKey, _ := solana.PrivateKeyFromBase58("HqN1uEByQ15rRorbrMXm3rvrRKNyH5SgvySKMNRRsDA1KT5upFkAK93cGxQZNpFQwAwM6bZCp2X5g5W2tSXeUGG")
+	fmt.Println("Fee payer private key is:", feePayerPrivateKey.String())
+
+	feePayerPubkey, err := solana.PublicKeyFromBase58(feePayerPrivateKey.PublicKey().String())
+	require.NoError(t, err, "There should not be any error")
+
+	userPubkey, err := solana.PublicKeyFromBase58("J7iEKD3UB1qdGdkeKUK5gfJ5oh8g3a5V95iJ8GAQfMbt")
+	require.NoError(t, err, "There should not be any error")
+
+	programKey := solana.MustPrivateKeyFromBase58("44GeNewbQZYP5hmWfE7VQ8xJDEhgd8iwSeYeVHisK1nkqQa5mwwLEsvuDHCD3ohku8T3jA4bEVMPkQtSRCseiXsv")
+	additionalKey := solana.MustPrivateKeyFromBase58("3aMhsEDMqVsbyQnuakswtnapni5TCvTX3h8JE814WZ1wAn5Td4qHd54vQc5QEqoamuoPfFC1tJQL3atQywvY7SAx")
+	otherKey := solana.MustPrivateKeyFromBase58("3aLd4omMmTYq18A7dHUPZfBK9gjSL1UNzDvikn5bUnBdKrFMKBVoJqELUVTz68h5pxzHvD2DDEAsZ5dfYjwqAVDy")
+
+	txWithAdditionalSignatures, err := solana.NewTransactionBuilder().AddInstruction(
+		solana.NewInstruction(programKey.PublicKey(), []*solana.AccountMeta{
+			solana.NewAccountMeta(userPubkey, true, true),
+			solana.NewAccountMeta(additionalKey.PublicKey(), true, true),
+			solana.NewAccountMeta(otherKey.PublicKey(), true, true),
+		}, []byte{1, 2, 3}),
+	).SetFeePayer(feePayerPubkey).Build()
+	require.NoError(t, err, "We should be able to build tx")
+
+	msgContent, err := txWithAdditionalSignatures.Message.MarshalBinary()
+	require.NoError(t, err, "We should be able to marshal message binary")
+
+	additionalKeySignature, err := additionalKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	otherKeySignature, err := otherKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	// This need to be passed as argument
+	fmt.Println(txWithAdditionalSignatures.Message.ToBase64())
+
+	fmt.Println("Additional pub key", additionalKey.PublicKey().String())
+	fmt.Println("Additional sig", additionalKeySignature.String())
+
+	fmt.Println("Other pub key", otherKey.PublicKey().String())
+	fmt.Println("Other sig", otherKeySignature.String())
+
+	signedTxStr := "BGWSjLCifR42mTJMgQgDt+s0w+f1ZnvP2uu854R3Q7cAMCBcJcs668Spo6vH6taskl0Tcggft2/fMhUq54f+fg8ATaqGWA8EhcVpMnWbnMZuc5UtGpWDUNwmaze3F+WNSnxi0wnuoN/ARKX1AaR0pgiwnHxyRqCZ1kdogVqjA6YNmUar0WOXuzHWpn2XfqmkI3RUg1++EEoxhy9gLcPN0E2KQ2qfSzcrO2zzp0jdTRThcrQx4HhxHCEJIK06j6CyAhB4E94WEG6CVvwvPwcFlM0hwyf9cn2zGBj0qqyn9lzZL+0gxSkEA7a0cr4Fs3nwd6WBqctZok7qADrG3xjT0wgEAAEFC6P/GlCfaM6Z0Fy72/usjBgX1BH+iEyP43fv3rAl3Mn+Tsfv3D8YAD/zhEfDKBycnIbnGxYoxZRkBLZfjQAR9/FhJ0GIzCuETDemBq0gcNtkTkre3O2JFWDLnPvMLh1FahQxet9EbyQehZHnQ6EWytUFZgAPfxKCibtHZIQSiwhzKnlRND2DAxnfFrAKvO737qfDGfcUEivH0hHMXDGeeQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQQDAQIDAwECAw=="
+	signedTx, _ := base64.StdEncoding.DecodeString(signedTxStr)
+	tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(signedTx))
+	spew.Dump(tx)
+}
 
 func TestGenerateTx(t *testing.T) {
 	feePayerPrivateKey, _ := solana.PrivateKeyFromBase58("4VmNTtyhpPbwoBQB9AQQVoyzLHqKfmbfFyR9HZie3dJbSqn3JMdNgfwBw8ZHWvbR8nV7WVa9pFZAc1KhA73UpN4Q")

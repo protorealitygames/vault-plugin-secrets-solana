@@ -362,15 +362,15 @@ func validateAndSignMsg(msg solana.Message, additionalSignatures []ParsedSignatu
 		return nil, err
 	}
 
-	additionalSignatures = append(additionalSignatures, ParsedSignaturePair{
-		Signature: feePayerSignature,
-		PubKey:    feePayerKey.PublicKey(),
-	})
-
-	additionalSignatures = append(additionalSignatures, ParsedSignaturePair{
-		Signature: userSignature,
-		PubKey:    userKey.PublicKey(),
-	})
+	additionalSignatures = append(additionalSignatures,
+		ParsedSignaturePair{
+			Signature: feePayerSignature,
+			PubKey:    feePayerKey.PublicKey(),
+		}, ParsedSignaturePair{
+			Signature: userSignature,
+			PubKey:    userKey.PublicKey(),
+		},
+	)
 
 	signatureRequiredPubkeys := msg.AccountKeys[0:msg.Header.NumRequiredSignatures]
 
