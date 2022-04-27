@@ -137,9 +137,11 @@ func (b *backend) key() []*framework.Path {
 					Callback: b.handleKeyCreate,
 					Summary:  "Create a new key only if there is no key yet",
 				},
+				logical.UpdateOperation: &framework.PathOperation{
+					Callback: b.handleKeyCreate,
+					Summary:  "Create a new key only if there is no key yet",
+				},
 			},
-
-			ExistenceCheck: b.handleKeyExistenceCheck,
 		},
 	}
 }
@@ -163,16 +165,19 @@ func (b *backend) sign() []*framework.Path {
 			},
 
 			Operations: map[logical.Operation]framework.OperationHandler{
-				logical.UpdateOperation: &framework.PathOperation{
-					Callback: b.handleSign,
-					Summary:  "Store a secret at the specified location.",
-				},
 				logical.CreateOperation: &framework.PathOperation{
 					Callback: b.handleSign,
+					Summary:  "Signs a message payload",
 				},
 			},
+
+			ExistenceCheck: b.handleSignExistenceCheck,
 		},
 	}
+}
+
+func (b *backend) handleSignExistenceCheck(ctx context.Context, req *logical.Request, data *framework.FieldData) (bool, error) {
+	return false, nil
 }
 
 func (b *backend) handleConfigExistenceCheck(ctx context.Context, req *logical.Request, data *framework.FieldData) (bool, error) {
@@ -221,7 +226,15 @@ func (b *backend) handleConfigCreate(ctx context.Context, req *logical.Request, 
 		return nil, fmt.Errorf("unable to store configuration, error: %v", err)
 	}
 
-	return nil, nil
+	pubCfg := StoreConfigDisplay{}
+	pubCfg.FeePayerPubKey = decodedPrivKey.PublicKey().String()
+
+	respData := make(map[string]interface{})
+	respData["config"] = pubCfg
+
+	return &logical.Response{
+		Data: respData,
+	}, nil
 }
 
 func (b *backend) handleConfigRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -232,6 +245,9 @@ func (b *backend) handleConfigRead(ctx context.Context, req *logical.Request, da
 	entry, err := req.Storage.Get(ctx, "config")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get the config entry, error: %v", err)
+	}
+	if entry == nil {
+		return nil, nil
 	}
 
 	cfg := &StorageConfig{}
@@ -253,15 +269,6 @@ func (b *backend) handleConfigRead(ctx context.Context, req *logical.Request, da
 	return &logical.Response{
 		Data: respData,
 	}, nil
-}
-
-func (b *backend) handleKeyExistenceCheck(ctx context.Context, req *logical.Request, data *framework.FieldData) (bool, error) {
-	out, err := req.Storage.Get(ctx, req.EntityID+"/"+"key")
-	if err != nil {
-		return false, errwrap.Wrapf("existence check failed: {{err}}", err)
-	}
-
-	return out != nil, nil
 }
 
 func (b *backend) handleKeyCreate(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
@@ -295,7 +302,16 @@ func (b *backend) handleKeyCreate(ctx context.Context, req *logical.Request, dat
 		return nil, fmt.Errorf("unable to store configuration, error: %v", err)
 	}
 
-	return nil, nil
+	displayKeyData := UserKeyDataDisplay{
+		UserKeyPubKey: privKey.PublicKey().String(),
+	}
+
+	respData := make(map[string]interface{})
+	respData["keydata"] = displayKeyData
+
+	return &logical.Response{
+		Data: respData,
+	}, nil
 }
 
 func (b *backend) handleKeyRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
