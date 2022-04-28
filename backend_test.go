@@ -1,16 +1,13 @@
 package solana
 
 import (
-	"encoding/base64"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestGenerateTx2(t *testing.T) {
+/*func TestGenerateTx2(t *testing.T) {
 	feePayerPrivateKey, _ := solana.PrivateKeyFromBase58("HqN1uEByQ15rRorbrMXm3rvrRKNyH5SgvySKMNRRsDA1KT5upFkAK93cGxQZNpFQwAwM6bZCp2X5g5W2tSXeUGG")
 	fmt.Println("Fee payer private key is:", feePayerPrivateKey.String())
 
@@ -92,7 +89,7 @@ func TestGenerateTx(t *testing.T) {
 	require.NoError(t, err, "We should be able to get the base64 payload")
 
 	fmt.Println(base64Payload)
-}
+}*/
 
 func TestValidateAndSignTxWithAdditionalSignatures(t *testing.T) {
 	feePayerKey, _ := solana.NewRandomPrivateKey()
@@ -164,38 +161,101 @@ func TestValidateAndSignTx(t *testing.T) {
 	userKey, _ := solana.NewRandomPrivateKey()
 	programKey, _ := solana.NewRandomPrivateKey()
 
+	additionalKey, _ := solana.NewRandomPrivateKey()
+	otherKey, _ := solana.NewRandomPrivateKey()
+
 	tx, err := solana.NewTransactionBuilder().AddInstruction(
 		solana.NewInstruction(programKey.PublicKey(), []*solana.AccountMeta{
+			solana.NewAccountMeta(additionalKey.PublicKey(), true, true),
 			solana.NewAccountMeta(userKey.PublicKey(), true, true),
+			solana.NewAccountMeta(otherKey.PublicKey(), true, true),
 		}, []byte{1, 2, 3}),
 	).SetFeePayer(feePayerKey.PublicKey()).Build()
 	require.NoError(t, err, "We should be able to build tx")
 
-	tx, err = validateAndSignMsg(tx.Message, []ParsedSignaturePair{}, feePayerKey, userKey)
+	msgContent, err := tx.Message.MarshalBinary()
+	require.NoError(t, err, "We should be able to marshal message binary")
+
+	additionalKeySignature, err := additionalKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	otherKeySignature, err := otherKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	tx, err = validateAndSignMsg(tx.Message, []ParsedSignaturePair{
+		{
+			Signature: additionalKeySignature,
+			PubKey:    additionalKey.PublicKey(),
+		},
+		{
+			Signature: otherKeySignature,
+			PubKey:    otherKey.PublicKey(),
+		},
+	}, feePayerKey, userKey)
 	require.NoError(t, err, "We should be able sign a valid tx")
 
-	require.Equal(t, 2, len(tx.Signatures), "There need to be two signatures")
+	require.Equal(t, 4, len(tx.Signatures), "There need to be four signatures")
 
 	invalidTxWithNoFeePayer, err := solana.NewTransactionBuilder().AddInstruction(
 		solana.NewInstruction(programKey.PublicKey(), []*solana.AccountMeta{
 			solana.NewAccountMeta(userKey.PublicKey(), true, true),
+			solana.NewAccountMeta(otherKey.PublicKey(), true, true),
 			solana.NewAccountMeta(feePayerKey.PublicKey(), true, true),
+			solana.NewAccountMeta(additionalKey.PublicKey(), true, true),
 		}, []byte{1, 2, 3}),
 	).Build()
 	require.NoError(t, err, "We should be able to build tx")
 
-	_, err = validateAndSignMsg(invalidTxWithNoFeePayer.Message, []ParsedSignaturePair{}, feePayerKey, userKey)
+	msgContent, err = invalidTxWithNoFeePayer.Message.MarshalBinary()
+	require.NoError(t, err, "We should be able to marshal message binary")
+
+	additionalKeySignature, err = additionalKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	otherKeySignature, err = otherKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	_, err = validateAndSignMsg(invalidTxWithNoFeePayer.Message, []ParsedSignaturePair{
+		{
+			Signature: additionalKeySignature,
+			PubKey:    additionalKey.PublicKey(),
+		},
+		{
+			Signature: otherKeySignature,
+			PubKey:    otherKey.PublicKey(),
+		},
+	}, feePayerKey, userKey)
 	require.EqualError(t, err, "fee payer pubkey must be the included in account keys at 0th Index", "We should get the exact error")
 
 	invalidTxFeePayerUsed, err := solana.NewTransactionBuilder().AddInstruction(
 		solana.NewInstruction(programKey.PublicKey(), []*solana.AccountMeta{
-			solana.NewAccountMeta(userKey.PublicKey(), true, true),
+			solana.NewAccountMeta(additionalKey.PublicKey(), true, true),
 			solana.NewAccountMeta(feePayerKey.PublicKey(), true, true),
+			solana.NewAccountMeta(userKey.PublicKey(), true, true),
+			solana.NewAccountMeta(otherKey.PublicKey(), true, true),
 		}, []byte{1, 2, 3}),
 	).SetFeePayer(feePayerKey.PublicKey()).Build()
 	require.NoError(t, err, "We should be able to build tx")
 
-	_, err = validateAndSignMsg(invalidTxFeePayerUsed.Message, []ParsedSignaturePair{}, feePayerKey, userKey)
+	msgContent, err = invalidTxFeePayerUsed.Message.MarshalBinary()
+	require.NoError(t, err, "We should be able to marshal message binary")
+
+	additionalKeySignature, err = additionalKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	otherKeySignature, err = otherKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	_, err = validateAndSignMsg(invalidTxFeePayerUsed.Message, []ParsedSignaturePair{
+		{
+			Signature: additionalKeySignature,
+			PubKey:    additionalKey.PublicKey(),
+		},
+		{
+			Signature: otherKeySignature,
+			PubKey:    otherKey.PublicKey(),
+		},
+	}, feePayerKey, userKey)
 	require.EqualError(
 		t,
 		err,
@@ -208,11 +268,31 @@ func TestValidateAndSignTx(t *testing.T) {
 		solana.NewInstruction(programKey.PublicKey(), []*solana.AccountMeta{
 			solana.NewAccountMeta(userKey.PublicKey(), true, true),
 			solana.NewAccountMeta(randomKey.PublicKey(), true, true),
+			solana.NewAccountMeta(additionalKey.PublicKey(), true, true),
+			solana.NewAccountMeta(otherKey.PublicKey(), true, true),
 		}, []byte{1, 2, 3}),
 	).SetFeePayer(feePayerKey.PublicKey()).Build()
 	require.NoError(t, err, "We should be able to build tx")
 
-	_, err = validateAndSignMsg(invalidTxUnknownSigningAccount.Message, []ParsedSignaturePair{}, feePayerKey, userKey)
+	msgContent, err = invalidTxUnknownSigningAccount.Message.MarshalBinary()
+	require.NoError(t, err, "We should be able to marshal message binary")
+
+	additionalKeySignature, err = additionalKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	otherKeySignature, err = otherKey.Sign(msgContent)
+	require.NoError(t, err, "We should be able to sign message content")
+
+	_, err = validateAndSignMsg(invalidTxUnknownSigningAccount.Message, []ParsedSignaturePair{
+		{
+			Signature: additionalKeySignature,
+			PubKey:    additionalKey.PublicKey(),
+		},
+		{
+			Signature: otherKeySignature,
+			PubKey:    otherKey.PublicKey(),
+		},
+	}, feePayerKey, userKey)
 	require.EqualError(
 		t,
 		err,
