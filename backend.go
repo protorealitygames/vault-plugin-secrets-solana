@@ -350,6 +350,9 @@ func (b *backend) handleKeyRead(ctx context.Context, req *logical.Request, data 
 
 }
 
+// validateAndSignMsg takes a solana message, additional signatures required to be filled in the transaction, fee payer private key
+// and user key. It creates a map of public key and signature using signature pair and two private keys. Makes sure that
+// we have all signatures required by the message and create tx with that message and all the signatures.
 func validateAndSignMsg(msg solana.Message, additionalSignatures []ParsedSignaturePair, feePayerKey, userKey solana.PrivateKey) (*solana.Transaction, error) {
 	if !msg.AccountKeys[0].Equals(feePayerKey.PublicKey()) {
 		return nil, fmt.Errorf("fee payer pubkey must be the included in account keys at 0th Index")
@@ -415,6 +418,7 @@ func validateAndSignMsg(msg solana.Message, additionalSignatures []ParsedSignatu
 	return &tx, nil
 }
 
+// parseAdditionalSignature takes the raw map we got from user and parse the public key as well as signature
 func parseAdditionalSignature(additionalSignatures map[string]string) ([]ParsedSignaturePair, error) {
 	parsedSignatures := make([]ParsedSignaturePair, 0)
 
