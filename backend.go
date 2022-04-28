@@ -14,31 +14,38 @@ import (
 	"github.com/hashicorp/vault/sdk/logical"
 )
 
-type StorageConfig struct {
+// Config stores configuration for the plugin
+type Config struct {
 	FeePayerKey string `json:"fee_payer_key"`
 }
 
+// UserKeyData stores user key and supporting data
 type UserKeyData struct {
 	UserKey string `json:"user_key"`
 }
 
+// UserKeyDataDisplay is display version of UserKeyData
 type UserKeyDataDisplay struct {
 	UserKeyPubKey string `json:"user_key_pub_key"`
 }
 
-type StoreConfigDisplay struct {
+// ConfigDisplay is display version of Config
+type ConfigDisplay struct {
 	FeePayerPubKey string `json:"fee_payer_pub_key"`
 }
 
+// SignOutput contains signature data
 type SignOutput struct {
 	SignedTx string `json:"signed_tx"`
 }
 
+// SignaturePair contains raw signature of the message and corresponding PubKey
 type SignaturePair struct {
 	Signature string `json:"signature"`
 	Pubkey    string `json:"pubkey"`
 }
 
+// ParsedSignaturePair contains parsed signature of the message and corresponding PubKey
 type ParsedSignaturePair struct {
 	Signature solana.Signature
 	PubKey    solana.PublicKey
@@ -215,7 +222,7 @@ func (b *backend) handleConfigCreate(ctx context.Context, req *logical.Request, 
 		return nil, fmt.Errorf("invalid fee payer key, expected: %d bytes, got %d bytes", ed25519.PrivateKeySize, len(decodedPrivKey))
 	}
 
-	entry, err := logical.StorageEntryJSON("config", StorageConfig{
+	entry, err := logical.StorageEntryJSON("config", Config{
 		FeePayerKey: feePayerKey,
 	})
 	if err != nil {
@@ -226,7 +233,7 @@ func (b *backend) handleConfigCreate(ctx context.Context, req *logical.Request, 
 		return nil, fmt.Errorf("unable to store configuration, error: %v", err)
 	}
 
-	pubCfg := StoreConfigDisplay{}
+	pubCfg := ConfigDisplay{}
 	pubCfg.FeePayerPubKey = decodedPrivKey.PublicKey().String()
 
 	respData := make(map[string]interface{})
@@ -250,7 +257,7 @@ func (b *backend) handleConfigRead(ctx context.Context, req *logical.Request, da
 		return nil, nil
 	}
 
-	cfg := &StorageConfig{}
+	cfg := &Config{}
 	if err := entry.DecodeJSON(&cfg); err != nil {
 		return nil, fmt.Errorf("unable to decode config json, error: %v", err)
 	}
@@ -260,7 +267,7 @@ func (b *backend) handleConfigRead(ctx context.Context, req *logical.Request, da
 		return nil, fmt.Errorf("unable to read fee payer key, error: %v", err)
 	}
 
-	pubCfg := StoreConfigDisplay{}
+	pubCfg := ConfigDisplay{}
 	pubCfg.FeePayerPubKey = privKey.PublicKey().String()
 
 	respData := make(map[string]interface{})
@@ -495,7 +502,7 @@ func (b *backend) handleSign(ctx context.Context, req *logical.Request, data *fr
 		return nil, fmt.Errorf("unable to construct a message from message payload")
 	}
 
-	cfg := &StorageConfig{}
+	cfg := &Config{}
 	if err := entry.DecodeJSON(&cfg); err != nil {
 		return nil, fmt.Errorf("unable to decode config json, error: %v", err)
 	}
