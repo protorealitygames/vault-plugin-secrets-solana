@@ -1,0 +1,19 @@
+{
+  "name": "node-demo",
+  "version": "0.0.0",
+  "description": "Demo for operation with solana plugin",
+  "main": "index.js",
+  "scripts": {
+  },
+  "author": "Parth Desai <desaiparth08@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.39.1",
+    "bs58": "^5.0.0",
+    "follow-redirects": "^1.14.9",
+    "parse-diff": "0.9.0"
+  },
+  "engines": {
+    "node": "^16.0.0"
+  }
+}
