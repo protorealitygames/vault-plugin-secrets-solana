@@ -11,6 +11,7 @@ We have node.js demo available in `node_demo` folder.
 
 ### Set configuration
 One time operation. Should only be allowed to be done by root user.
+Root bearer token required.
 Path: `{{vault_server}}/v1/vault-plugin-secrets-solana/config`
 HTTP Method: POST
 Body: 
@@ -26,6 +27,7 @@ No body
 
 ### Get configuration
 Get the configuration that was done by root user. Recommended to use user token here.
+User bearer token required.
 Path: `{{vault_server}}/v1/vault-plugin-secrets-solana/config`
 HTTP Method: GET
 
@@ -50,6 +52,7 @@ Response code: 200
 
 ### Set User key
 Asks plugin to generate a key for the user. Can only be called one time per user.
+User bearer token required.
 Path: `{{vault_server}}/v1/vault-plugin-secrets-solana/key`
 HTTP Method: POST
 
@@ -74,6 +77,7 @@ Response code: 200
 
 ### Get User key
 Gets the user's generated key.
+User bearer token required.
 Path: `{{vault_server}}/v1/vault-plugin-secrets-solana/key`
 HTTP Method: GET
 
@@ -98,6 +102,7 @@ Response code: 200
 
 ### Sign the solana tx message
 Signs a solana message using the global fee payer key and local user key.
+User bearer token required.
 If additional signatures are provided in the signing request the public key must be used in one or 
 more instruction and the signature must be valid. 
 If the signing request is valid, the plugin will sign the message and incorporate the additional signatures
