@@ -15,7 +15,10 @@ endif
 all: fmt build start
 
 build:
-	GOOS=$(OS) GOARCH="$(GOARCH)" go build -o ./bin/vault-plugin-secrets-solana ./cmd/vault-plugin-secrets-solana/main.go
+	GOOS=$(OS) GOARCH="$(GOARCH)" go build -o ./bin/current/vault-plugin-secrets-solana ./cmd/vault-plugin-secrets-solana/main.go
+
+build-linux:
+	GOOS=linux GOARCH="$(GOARCH)" go build -o ./bin/linux/vault-plugin-secrets-solana ./cmd/vault-plugin-secrets-solana/main.go
 
 start:
 	vault server -dev -dev-root-token-id=root -dev-plugin-dir=./vault/plugins
