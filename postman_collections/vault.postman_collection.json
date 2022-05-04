@@ -1,0 +1,48 @@
+{
+	"info": {
+		"_postman_id": "7af9b527-5eb7-4a23-a85d-562971bf5913",
+		"name": "vault",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Write policy",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{root_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"policy\": \"path \\\"vault-plugin-secrets-solana/sign\\\" { capabilities = [\\\"create\\\"]} path \\\"vault-plugin-secrets-solana/key\\\" { capabilities = [\\\"create\\\", \\\"update\\\", \\\"read\\\"] } path \\\"vault-plugin-secrets-solana/config\\\" { capabilities = [\\\"read\\\"]}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/sys/policy/solana",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"sys",
+						"policy",
+						"solana"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

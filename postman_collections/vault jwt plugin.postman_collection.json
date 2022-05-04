@@ -1,0 +1,173 @@
+{
+	"info": {
+		"_postman_id": "66156d52-379d-4381-aafe-014b58cd2032",
+		"name": "vault jwt plugin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Set JWT Config",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{root_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"oidc_discovery_ca_pem\": \"-----BEGIN CERTIFICATE-----\\nMIIFjjCCBHagAwIBAgIJAOxZys1STvVjMA0GCSqGSIb3DQEBCwUAMIGNMQswCQYD\\nVQQGEwJTRzESMBAGA1UECAwJU2luZ2Fwb3JlMRIwEAYDVQQHDAlTaW5nYXBvcmUx\\nHDAaBgNVBAoME1Byb3RvUmVhbGl0eSBHYW1pbmcxCzAJBgNVBAsMAklUMSswKQYD\\nVQQDDCIqLmFwLXNvdXRoZWFzdC0xLmVsYi5hbWF6b25hd3MuY29tMB4XDTIyMDQy\\nMTA3MzAxN1oXDTMyMDQxODA3MzAxN1owgY0xCzAJBgNVBAYTAlNHMRIwEAYDVQQI\\nDAlTaW5nYXBvcmUxEjAQBgNVBAcMCVNpbmdhcG9yZTEcMBoGA1UECgwTUHJvdG9S\\nZWFsaXR5IEdhbWluZzELMAkGA1UECwwCSVQxKzApBgNVBAMMIiouYXAtc291dGhl\\nYXN0LTEuZWxiLmFtYXpvbmF3cy5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw\\nggEKAoIBAQChctewvRnaAHs4Axz4AKnYXtZbNLC+XEft4HVoFfZjRhXw0VmkFVdx\\nNmWCgHpz/7ld/9t0AJPGLLpLVRscaGRyAn4/ThkuNZuCoeQIsgoJRey1OR2nKzIm\\nHTlmaGQbyyRJLzqCEKFD2XrrDKqcLxHOTjuYLx3QpSCgF+n7IMEl/SFp4zkieAgR\\nFTsLmzcjji6eXqWplI01PXd1EQHnIu7td7qFOeDpKYOJgU3T9d6EzoO2UeQ6K1Aj\\nPnwKQmg6Pf8ZoNGCn62wW99B/wnj/CXqmySuZfcEX0SVejv9P5oPWYlnhEHn2Duq\\nmH19Bh56iiFb5YEMLaoisoG4GaDFM0FJAgMBAAGjggHtMIIB6TAdBgNVHQ4EFgQU\\ndhaGC6WTqM0IX3ImX0ttV8o6oY0wgcIGA1UdIwSBujCBt4AUdhaGC6WTqM0IX3Im\\nX0ttV8o6oY2hgZOkgZAwgY0xCzAJBgNVBAYTAlNHMRIwEAYDVQQIDAlTaW5nYXBv\\ncmUxEjAQBgNVBAcMCVNpbmdhcG9yZTEcMBoGA1UECgwTUHJvdG9SZWFsaXR5IEdh\\nbWluZzELMAkGA1UECwwCSVQxKzApBgNVBAMMIiouYXAtc291dGhlYXN0LTEuZWxi\\nLmFtYXpvbmF3cy5jb22CCQDsWcrNUk71YzAMBgNVHRMEBTADAQH/MAsGA1UdDwQE\\nAwIC/DBzBgNVHREEbDBqgkRrZXljbC1rZXljbC0xY3NyZ296angxdjFmLTU0MzU4\\nNzM2MS5hcC1zb3V0aGVhc3QtMS5lbGIuYW1hem9uYXdzLmNvbYIiKi5hcC1zb3V0\\naGVhc3QtMS5lbGIuYW1hem9uYXdzLmNvbTBzBgNVHRIEbDBqgkRrZXljbC1rZXlj\\nbC0xY3NyZ296angxdjFmLTU0MzU4NzM2MS5hcC1zb3V0aGVhc3QtMS5lbGIuYW1h\\nem9uYXdzLmNvbYIiKi5hcC1zb3V0aGVhc3QtMS5lbGIuYW1hem9uYXdzLmNvbTAN\\nBgkqhkiG9w0BAQsFAAOCAQEAdys7/30dRqUHpkcUPNbESZKfjSGGDFHeSYiYApOj\\n5YgwjG1ezJdWmGKZuDwwA5tA6H/iyKYNpLqMSFMpcmfe6rOOTA7eDaRVSFRdeX38\\nQ1JzNmu+jbVjFfPIDxADq6bKKlDNw5gzv6HHsPOeZos2fyvpTvjhvTN3sLujFEfc\\nuNMXXt4JbK+giiAtdb+9PBMWtQwOw3bxa2ZzEz9DL3NpBRup9fnkAiEGCG8s2VD+\\nqxSu7IKz9y3xXcZJuc9BhkeXiyBu22RbVfKaWe3LEh/HM5o73w2Kw1Xgy3qdQ5sq\\n5RvsSMipzoNucJdHFBi9G+cDMRmcT0MRgAuo/gOpYh1ctg==\\n-----END CERTIFICATE-----\",\n        \"oidc_discovery_url\": \"https://keycl-keycl-1csrgozjx1v1f-543587361.ap-southeast-1.elb.amazonaws.com/auth/realms/DO119\",\n        \"bound_issuer\": \"https://keycl-keycl-1csrgozjx1v1f-543587361.ap-southeast-1.elb.amazonaws.com/auth/realms/DO119\",\n        \"default_role\": \"solana\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/auth/jwt/config",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"auth",
+						"jwt",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get JWT Config",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{root_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{vault_server}}/v1/auth/jwt/config",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"auth",
+						"jwt",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Configure new Role",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{root_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bound_audiences\": [\n            \"login\"\n        ],\n        \"claim_mappings\": {\n            \"email\": \"email\",\n            \"name\": \"name\",\n            \"sub\": \"token_id\",\n            \"upn\": \"unique_name\"\n        },\n        \"role_type\": \"jwt\",\n        \"token_no_default_policy\": true,\n        \"token_policies\": [\n            \"solana\"\n        ],\n        \"user_claim\": \"sub\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/auth/jwt/role/solana",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"auth",
+						"jwt",
+						"role",
+						"solana"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login via JWT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Setting client token\", function () {",
+							"    pm.response.to.have.status(200);",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"user_token\", jsonData.auth.client_token);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"jwt\": \"{{jwt_id_token}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/auth/jwt/login",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"auth",
+						"jwt",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

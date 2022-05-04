@@ -1,0 +1,181 @@
+{
+	"info": {
+		"_postman_id": "4160ec16-ad40-4b13-bba9-235f3f21f017",
+		"name": "vault solana plugin",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Signing Request",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{user_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"msg_payload\": \"AwABBAuj/xpQn2jOmdBcu9v7rIwYF9QR/ohMj+N3796wJdzJOVXuF/G9pt6IstPXDPyPgcumlBub8Wn4GSMQL/B6WKk+jddR4FsINVmGLVBLefZ7yP0kcGnyccvmJ96gWoMsPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYQKgQrvfpgfI2Yx0aZRlp9e+lfZygEXmraTyS/WKwJcBAwICATQAAAAAAMqaOwAAAAAsAQAAAAAAAHMqeVE0PYMDGd8WsAq87vfup8MZ9xQSK8fSEcxcMZ55\",\n    \"additional_signatures\": [\n        {\n            \"4rpEg42CD1KJXfnHR1G1BkTDcdfq2hDzAtJcrhrTZHxt\": \"RaHTBzkWv4q3mfHtJoccDxxpoC8KrFFg78waxmWgunsBEfMUjYq7ZLZgesnKFpWs435Lx4sX6dcphR4HjceYhSs\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/vault-plugin-secrets-solana/sign",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"vault-plugin-secrets-solana",
+						"sign"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get User public key",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{user_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{vault_server}}/v1/vault-plugin-secrets-solana/key",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"vault-plugin-secrets-solana",
+						"key"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Set User key",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{user_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/vault-plugin-secrets-solana/key",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"vault-plugin-secrets-solana",
+						"key"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Set Configuration",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{root_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"fee_payer_key\": \"HqN1uEByQ15rRorbrMXm3rvrRKNyH5SgvySKMNRRsDA1KT5upFkAK93cGxQZNpFQwAwM6bZCp2X5g5W2tSXeUGG\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{vault_server}}/v1/vault-plugin-secrets-solana/config",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"vault-plugin-secrets-solana",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Configuration",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{user_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{vault_server}}/v1/vault-plugin-secrets-solana/config",
+					"host": [
+						"{{vault_server}}"
+					],
+					"path": [
+						"v1",
+						"vault-plugin-secrets-solana",
+						"config"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
