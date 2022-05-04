@@ -3,6 +3,9 @@ const web3 = require('@solana/web3.js');
 const bs58 = require('bs58');
 const timers = require('timers/promises');
 
+// TODO: Replace this with your vault token for demo to work
+const VAULT_TOKEN = 'hvs.CAESIH8pEyhm3X-hoCcR5Ugr9hn7JVAZRNiLTkBR3Quc177wGh4KHGh2cy5RaWFrb0RFd08wRkNReWVBejBZRDU3MEk';
+
 function req(options, obj) {
     return new Promise((resolve, reject) => {
         const req = http.request(options, (res) => {
@@ -81,7 +84,7 @@ function createOptionForVault(method, path) {
         path,
         headers: {
             Authorization:
-                'Bearer hvs.CAESIH8pEyhm3X-hoCcR5Ugr9hn7JVAZRNiLTkBR3Quc177wGh4KHGh2cy5RaWFrb0RFd08wRkNReWVBejBZRDU3MEk',
+                'Bearer ' + VAULT_TOKEN,
             'Content-Type': 'application/json'
         },
         maxRedirects: 20
