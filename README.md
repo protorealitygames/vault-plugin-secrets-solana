@@ -144,3 +144,6 @@ Body:
 }
 ```
 
+## Production Guidelines
+1. Upgrading of vault plugin: We need to follow procedure outlined in [documentation](https://www.vaultproject.io/docs/upgrading/plugins)
+2. Taking regular backup: To prevent any data loss, in production periodic backup of underlying storage is necessary.

@@ -81,7 +81,7 @@ function createOptionForVault(method, path) {
         path,
         headers: {
             Authorization:
-                'Bearer hvs.CAESICLp9gL_6vfuI4pFUyejCIPK5-P5S8Si_jVoFU0faLvSGh4KHGh2cy5QNVZmdzRsUVBwSHZPSW52eGlHcTdtZU4',
+                'Bearer hvs.CAESIH8pEyhm3X-hoCcR5Ugr9hn7JVAZRNiLTkBR3Quc177wGh4KHGh2cy5RaWFrb0RFd08wRkNReWVBejBZRDU3MEk',
             'Content-Type': 'application/json'
         },
         maxRedirects: 20
